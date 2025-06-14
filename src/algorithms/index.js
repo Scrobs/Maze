@@ -55,7 +55,9 @@ function notImplemented(width, height) {
 function wrapAlgorithm(fn) {
   return (width, height, options = {}) => {
     try {
-      return fn(width, height, options);
+      return (options && Object.keys(options).length)
+        ? fn(width, height, options)   // pass options only when meaningful
+        : fn(width, height);           // avoid arity/typing issues
     } catch (error) {
       console.error(`Algorithm failed: ${error.message}`);
       throw error;

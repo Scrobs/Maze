@@ -1,37 +1,9 @@
-// src/export/json.js
-
-/**
- * Triggers a download of the maze as a JSON file.
- * @param {Maze} maze - Maze object (from src/model/maze.js)
- * @param {string} [filename="maze.json"]
- */
-export function saveMazeAsJSON(maze, filename = "maze.json") {
-  const data = JSON.stringify(maze, null, 2);
-  const blob = new Blob([data], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-
-  // Create and click a hidden link
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.style.display = "none";
-  document.body.appendChild(a);
-  
-  try {
-    a.click();
-  } finally {
-    // Immediate cleanup
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
-}
-
 // src/export/svg.js
 
 /**
- * Rounds a number to specified decimal places
- * @param {number} num - Number to round
- * @param {number} decimals - Number of decimal places
+ * Zaokrouhlí číslo na zadaný počet desetinných míst
+ * @param {number} num - Číslo k zaokrouhlení
+ * @param {number} decimals - Počet desetinných míst
  * @returns {number}
  */
 function round(num, decimals = 1) {
@@ -40,20 +12,20 @@ function round(num, decimals = 1) {
 }
 
 /**
- * Generates SVG markup for a maze and triggers a download.
- * @param {Maze} maze - Maze object (from src/model/maze.js)
- * @param {string} [filename="maze.svg"]
- * @param {object} [options] - SVG export options
- * @param {number} [options.size=600] - SVG width/height in px
- * @param {number} [options.margin=24] - Margin around maze in px
- * @param {string} [options.wallColor="#222"] - Wall color
- * @param {number} [options.wallWidth=2] - Wall thickness in px
- * @param {string} [options.startColor="#26a65b"] - Start cell fill
- * @param {string} [options.finishColor="#e17055"] - Finish cell fill
+ * Generuje SVG markup pro bludiště a spustí stažení.
+ * @param {Maze} maze - Objekt bludiště (z src/model/maze.js)
+ * @param {string} [filename="bludiste.svg"]
+ * @param {object} [options] - Možnosti exportu SVG
+ * @param {number} [options.size=600] - Šířka/výška SVG v px
+ * @param {number} [options.margin=24] - Okraj kolem bludiště v px
+ * @param {string} [options.wallColor="#222"] - Barva stěn
+ * @param {number} [options.wallWidth=2] - Tloušťka stěny v px
+ * @param {string} [options.startColor="#26a65b"] - Barva výplně startovní buňky
+ * @param {string} [options.finishColor="#e17055"] - Barva výplně cílové buňky
  */
 export function saveMazeAsSVG(
   maze,
-  filename = "maze.svg",
+  filename = "bludiste.svg",
   options = {}
 ) {
   const size = options.size ?? 600;
@@ -71,14 +43,14 @@ export function saveMazeAsSVG(
   const xOffset = (size - cols * cellSize) / 2;
   const yOffset = (size - rows * cellSize) / 2;
 
-  // SVG header
+  // SVG hlavička
   let svg = [
     `<?xml version="1.0" encoding="UTF-8"?>`,
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">`,
     `<rect width="100%" height="100%" fill="#fafafa"/>`
   ];
 
-  // Highlight start cell
+  // Zvýraznit startovní buňku
   if (maze.start) {
     const sx = round(xOffset + maze.start.x * cellSize + 2);
     const sy = round(yOffset + maze.start.y * cellSize + 2);
@@ -88,7 +60,7 @@ export function saveMazeAsSVG(
     );
   }
   
-  // Highlight finish cell
+  // Zvýraznit cílovou buňku
   if (maze.finish) {
     const fx = round(xOffset + maze.finish.x * cellSize + 2);
     const fy = round(yOffset + maze.finish.y * cellSize + 2);
@@ -98,10 +70,10 @@ export function saveMazeAsSVG(
     );
   }
 
-  // Group all walls for better organization
+  // Seskupit všechny stěny pro lepší organizaci
   svg.push(`<g stroke="${wallColor}" stroke-width="${wallWidth}" stroke-linecap="square">`);
   
-  // Draw all walls
+  // Nakreslit všechny stěny
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < cols; x++) {
       const cell = maze.getCell(x, y);
@@ -110,7 +82,7 @@ export function saveMazeAsSVG(
       const x2 = round(x1 + cellSize);
       const y2 = round(y1 + cellSize);
       
-      // Each wall as SVG <line> with rounded coordinates
+      // Každá stěna jako SVG <line> se zaokrouhlenými souřadnicemi
       if (cell.hasWall("N")) {
         svg.push(`  <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y1}"/>`);
       }
@@ -133,7 +105,7 @@ export function saveMazeAsSVG(
   const blob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
   const url = URL.createObjectURL(blob);
 
-  // Download as file
+  // Stáhnout jako soubor
   const a = document.createElement("a");
   a.href = url;
   a.download = filename;
@@ -143,7 +115,7 @@ export function saveMazeAsSVG(
   try {
     a.click();
   } finally {
-    // Immediate cleanup
+    // Okamžité vyčištění
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }

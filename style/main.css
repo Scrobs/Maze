@@ -235,3 +235,6 @@ canvas#maze-canvas {
   background: #c3c3c3;
   border-radius: 7px;
 }
+
+#balance-options { display: none; }
+#balance-options.active { display: flex; gap: 1rem; }

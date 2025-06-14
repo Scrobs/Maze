@@ -7,45 +7,50 @@
  * @param {object} [options] - Rendering options
  */
 export function renderMaze(maze, canvas, options = {}) {
-  const margin = options.margin ?? 24;
-  const wallColor = options.wallColor ?? "#333";
-  const wallWidth = options.wallWidth ?? 2;
-  const startColor = options.startColor ?? "#26a65b";
+  const margin      = options.margin      ?? 24;
+  const wallColor   = options.wallColor   ?? "#333";
+  const wallWidth   = options.wallWidth   ?? 2;    // CSS-pixel thickness
+  const startColor  = options.startColor  ?? "#26a65b";
   const finishColor = options.finishColor ?? "#e17055";
 
-  const ctx = canvas.getContext('2d');
-  const dpr = window.devicePixelRatio || 1;
-  
-  // Get the CSS size of the canvas
-  const displayWidth = canvas.clientWidth || 600;
-  const displayHeight = canvas.clientHeight || 600;
-  
-  // Clear with proper dimensions
-  ctx.clearRect(0, 0, displayWidth, displayHeight);
+  const ctx  = canvas.getContext("2d");
+  const dpr  = window.devicePixelRatio || 1;
 
+  /* ------------------------------------------------------------------
+   * 1.  FULL-SURFACE CLEAR  (must ignore any existing transform)
+   * ---------------------------------------------------------------- */
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);              // identity matrix
+  ctx.clearRect(0, 0, canvas.width, canvas.height); // device-pixel coords
+  ctx.restore();
+
+  /* ------------------------------------------------------------------
+   * 2.  GEOMETRY CALCULATION (CSS-pixel space, because ctx is scaled
+   *     by 'setupCanvas()' elsewhere)
+   * ---------------------------------------------------------------- */
+  const displayWidth  = canvas.width  / dpr;        // CSS-px width
+  const displayHeight = canvas.height / dpr;        // CSS-px height
   const rows = maze.height;
   const cols = maze.width;
 
-  // Calculate cell size based on display dimensions
-  const availableWidth = displayWidth - margin * 2;
-  const availableHeight = displayHeight - margin * 2;
-  const cellSize = Math.min(availableWidth / cols, availableHeight / rows);
+  const availW   = displayWidth  - margin * 2;
+  const availH   = displayHeight - margin * 2;
+  const cellSize = Math.min(availW / cols, availH / rows);
 
-  // Center the maze
-  const xOffset = (displayWidth - (cellSize * cols)) / 2;
-  const yOffset = (displayHeight - (cellSize * rows)) / 2;
+  const xOffset = (displayWidth  - cellSize * cols) / 2;
+  const yOffset = (displayHeight - cellSize * rows) / 2;
 
-  // Set up drawing style
+  /* ------------------------------------------------------------------
+   * 3.  WALL RENDERING  (draw each edge exactly once)
+   * ---------------------------------------------------------------- */
   ctx.save();
   ctx.strokeStyle = wallColor;
-  ctx.lineWidth = wallWidth;
-  ctx.lineCap = "square";
-  ctx.lineJoin = "miter";
+  ctx.lineWidth   = wallWidth / dpr;                // compensate for scaling
+  ctx.lineCap     = "square";
+  ctx.lineJoin    = "miter";
 
-  // Use Path2D for better performance on complex mazes
-  const wallPath = new Path2D();
-  
-  // Draw all walls
+  const path = new Path2D();
+
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < cols; x++) {
       const cell = maze.getCell(x, y);
@@ -56,85 +61,81 @@ export function renderMaze(maze, canvas, options = {}) {
       const x2 = x1 + cellSize;
       const y2 = y1 + cellSize;
 
-      // Draw walls if they exist
+      /* Draw each shared wall once:
+       *  ─── North & West for every cell
+       *  ─── South on bottom row
+       *  ─── East  on rightmost column
+       */
       if (cell.hasWall("N")) {
-        wallPath.moveTo(x1, y1);
-        wallPath.lineTo(x2, y1);
-      }
-      if (cell.hasWall("E")) {
-        wallPath.moveTo(x2, y1);
-        wallPath.lineTo(x2, y2);
-      }
-      if (cell.hasWall("S")) {
-        wallPath.moveTo(x2, y2);
-        wallPath.lineTo(x1, y2);
+        path.moveTo(x1, y1);
+        path.lineTo(x2, y1);
       }
       if (cell.hasWall("W")) {
-        wallPath.moveTo(x1, y2);
-        wallPath.lineTo(x1, y1);
+        path.moveTo(x1, y1);
+        path.lineTo(x1, y2);
+      }
+      if (y === rows - 1 && cell.hasWall("S")) {
+        path.moveTo(x2, y2);
+        path.lineTo(x1, y2);
+      }
+      if (x === cols - 1 && cell.hasWall("E")) {
+        path.moveTo(x2, y1);
+        path.lineTo(x2, y2);
       }
     }
   }
-  
-  ctx.stroke(wallPath);
+
+  ctx.stroke(path);
   ctx.restore();
 
-  // Fill start cell
-  if (maze.start) {
+  /* ------------------------------------------------------------------
+   * 4.  START / FINISH HIGHLIGHT
+   * ---------------------------------------------------------------- */
+  const drawCellFill = (pos, color) => {
+    const pad = 2;                                  // CSS-px padding
     ctx.save();
-    ctx.fillStyle = startColor;
+    ctx.fillStyle   = color;
     ctx.globalAlpha = 0.4;
-    const padding = 2;
     ctx.fillRect(
-      xOffset + maze.start.x * cellSize + padding,
-      yOffset + maze.start.y * cellSize + padding,
-      cellSize - padding * 2,
-      cellSize - padding * 2
+      xOffset + pos.x * cellSize + pad,
+      yOffset + pos.y * cellSize + pad,
+      cellSize - pad * 2,
+      cellSize - pad * 2
     );
     ctx.restore();
-  }
+  };
 
-  // Fill finish cell
-  if (maze.finish) {
-    ctx.save();
-    ctx.fillStyle = finishColor;
-    ctx.globalAlpha = 0.4;
-    const padding = 2;
-    ctx.fillRect(
-      xOffset + maze.finish.x * cellSize + padding,
-      yOffset + maze.finish.y * cellSize + padding,
-      cellSize - padding * 2,
-      cellSize - padding * 2
-    );
-    ctx.restore();
-  }
-  
-  // Draw portals if maze has them (for multi-layer)
-  if (maze._portals && maze._portals.length > 0) {
+  if (maze.start)  drawCellFill(maze.start,  startColor);
+  if (maze.finish) drawCellFill(maze.finish, finishColor);
+
+  /* ------------------------------------------------------------------
+   * 5.  PORTAL OVERLAY (dashed violet lines)
+   * ---------------------------------------------------------------- */
+  if (Array.isArray(maze._portals) && maze._portals.length) {
     ctx.save();
     ctx.strokeStyle = "#9c27b0";
-    ctx.lineWidth = 3;
+    ctx.lineWidth   = 3 / dpr;
     ctx.setLineDash([5, 5]);
-    
+
     for (const portal of maze._portals) {
-      const fromX = xOffset + portal.from.x * cellSize + cellSize / 2;
-      const fromY = yOffset + portal.from.y * cellSize + cellSize / 2;
-      const toX = xOffset + portal.to.x * cellSize + cellSize / 2;
-      const toY = yOffset + portal.to.y * cellSize + cellSize / 2;
-      
+      const fx = xOffset + portal.from.x * cellSize + cellSize / 2;
+      const fy = yOffset + portal.from.y * cellSize + cellSize / 2;
+      const tx = xOffset + portal.to.x   * cellSize + cellSize / 2;
+      const ty = yOffset + portal.to.y   * cellSize + cellSize / 2;
+
       ctx.beginPath();
-      ctx.moveTo(fromX, fromY);
-      ctx.lineTo(toX, toY);
+      ctx.moveTo(fx, fy);
+      ctx.lineTo(tx, ty);
       ctx.stroke();
-      
-      // Draw portal markers
-      ctx.fillStyle = "#9c27b0";
+
+      // End-point markers
       ctx.globalAlpha = 0.6;
+      ctx.fillStyle   = "#9c27b0";
       ctx.beginPath();
-      ctx.arc(fromX, fromY, 4, 0, Math.PI * 2);
+      ctx.arc(fx, fy, 4, 0, Math.PI * 2);
       ctx.fill();
       ctx.beginPath();
-      ctx.arc(toX, toY, 4, 0, Math.PI * 2);
+      ctx.arc(tx, ty, 4, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.restore();

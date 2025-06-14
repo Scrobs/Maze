@@ -1,75 +1,107 @@
+<!-- index.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="cs">
 <head>
   <meta charset="UTF-8">
-  <title>Maze Generator & Visualizer</title>
+  <title>Generátor a vizualizér bludišť</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Advanced, printable, and exportable 2D maze generator and visualizer with algorithm selection.">
+  <meta name="description" content="Pokročilý, tisknutelný a exportovatelný 2D generátor bludišť s výběrem algoritmů a možnostmi přizpůsobení obtížnosti.">
   <link rel="stylesheet" href="style/main.css">
   <!-- Monospaced font for optimal clarity -->
   <link href="https://fonts.googleapis.com/css2?family=Fira+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <!-- Optionally, favicon -->
+  <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
 </head>
 <body>
   <div class="container">
     <form id="maze-config" autocomplete="off">
-      <label for="maze-width">Width:</label>
-      <input type="number" id="maze-width" name="width" value="20" min="2" max="100" required>
+      <label for="maze-width">Šířka:</label>
+      <input type="number" id="maze-width" name="width" value="20" min="2" max="100" required title="Počet buněk na šířku (2-100)">
 
-      <label for="maze-height">Height:</label>
-      <input type="number" id="maze-height" name="height" value="20" min="2" max="100" required>
+      <label for="maze-height">Výška:</label>
+      <input type="number" id="maze-height" name="height" value="20" min="2" max="100" required title="Počet buněk na výšku (2-100)">
 
-      <label for="algorithm">Algorithm:</label>
+      <label for="algorithm">Algoritmus generování:</label>
       <select id="algorithm" name="algorithm">
-        <option value="binary-tree">Binary Tree (Very Easy)</option>
-        <option value="sidewinder">Sidewinder (Easy)</option>
-        <option value="recursive-backtracker">Recursive Backtracker (Easy–Medium)</option>
-        <option value="hunt-and-kill">Hunt-and-Kill (Medium)</option>
-        <option value="aldous-broder">Aldous-Broder (Medium)</option>
-        <option value="ellers">Eller's (Medium–Hard)</option>
-        <option value="prims">Randomized Prim's (Medium–Hard)</option>
-        <option value="kruskals">Randomized Kruskal's (Hard)</option>
-        <option value="wilsons">Wilson's Algorithm (Hard–Very Hard)</option>
-        <option value="braided">Braided / Post-Processed (Very Hard)</option>
-        <option value="sparse-loop">Sparse Loop-Added (Extremely Hard)</option>
-        <option value="multi-layer">3D / Multi-layer / Non-Euclidean (Nightmare/Expert)</option>
+        <option value="binary-tree" title="Vytváří velmi jednoduché bludiště s diagonální strukturou. Ideální pro začátečníky - každá buňka se připojuje buď na sever, nebo východ. Rychlý a spolehlivý algoritmus.">Binární strom (velmi snadné)</option>
+        <option value="sidewinder" title="Generuje bludiště s dlouhými horizontálními cestami a méně mrtvých konců. Pracuje řádek po řádku, vytváří horizontální 'běhy' s občasnými vertikálními spojeními.">Sidewinder (snadné)</option>
+        <option value="recursive-backtracker" title="Produkuje bludiště s dlouhými klikatými cestami a relativně málo mrtvými konci. Používá hloubkově orientovaný průchod s návratem. Velmi populární algoritmus.">Rekurzivní návrat (snadné–střední)</option>
+        <option value="hunt-and-kill" title="Vyváží složitost s různými délkami chodeb. Střídá fáze náhodné procházky ('zabíjení') se systematickým hledáním ('lov') nepropojených buněk.">Hon a zabíjení (střední)</option>
+        <option value="aldous-broder" title="Randomizovaný algoritmus vytvářející uniformně náhodné bludiště bez systematických vzorců. Může být pomalý na větších bludištích, ale garantuje nezaujaté výsledky.">Aldous-Broder (střední)</option>
+        <option value="ellers" title="Efektivní řádkový algoritmus s zajímavými vzory propojení. Pracuje řádek po řádku a spravuje množiny buněk pro zajištění konektivity. Ideální pro velmi široká bludiště.">Ellerův algoritmus (střední–těžké)</option>
+        <option value="prims" title="Postupně rozšiřuje bludiště z jednoho bodu přidáváním hraničních stěn. Tenduje k vytváření krátkých větvení a mnoha malých mrtvých konců.">Randomizovaný Primův algoritmus (střední–těžké)</option>
+        <option value="kruskals" title="Náhodně slučuje množiny buněk pomocí minimální kostry grafu. Vytváří náročné struktury s rovnoměrnou texturou a mnoha krátkými mrtvými konci.">Randomizovaný Kruskalův algoritmus (těžké)</option>
+        <option value="wilsons" title="Vytváří nezaujaté bludiště pomocí smyček-vymazaných náhodných procházek. Velmi pomalý na začátku, ale urychluje se. Garantuje uniformní pokrytí.">Wilsonův algoritmus (těžké–velmi těžké)</option>
+        <option value="braided" title="Post-procesuje bludiště odstraněním mrtvých konců pro vytvoření smyček a alternativních cest. Umožňuje více řešení a zkratek.">Proplétané / Post-processed (velmi těžké)</option>
+        <option value="sparse-loop" title="Přidává řídké smyčky do perfektního bludiště pro minimální, ale náročnou složitost. Vytváří strategické zkratky bez narušení hlavní výzvy.">Řídké smyčky (extrémně těžké)</option>
+        <option value="multi-layer" title="Generuje složité vícevrstvé bludiště pro expert řešitele. Simuluje 3D struktury nebo non-euklidovskou geometrii s portály mezi vrstvami.">3D / Vícevrstvé / Non-euklidovské (noční můra/expert)</option>
       </select>
+
+      <!-- Single-Path Toggle -->
+      <label for="single-path" style="display:block; margin-top:0.5rem;" title="Zajistí, že bludiště má pouze jedno možné řešení mezi vstupem a výstupem">
+        <input type="checkbox" id="single-path" name="singlePath">
+        Perfektní bludiště (jediné řešení)
+      </label>
+
+      <!-- Distribution Balancer Toggle -->
+      <label for="balance-dist" style="display:block; margin-top:0.5rem;" title="Upraví poměr různých typů buněk v bludišti pro vyváženější obtížnost">
+        <input type="checkbox" id="balance-dist" name="balanceDist">
+        Vyvážit poměry mrtvých konců / větvení / rovných cest
+      </label>
 
       <div id="algorithm-options" class="algorithm-options">
         <!-- Braided options -->
         <div class="option-group" data-algorithm="braided">
-          <label for="braidness">Braidness (0-1):</label>
+          <label for="braidness" title="Určuje, kolik mrtvých konců bude odstraněno (0 = žádné, 1 = všechny)">Stupeň propletení (0-1):</label>
           <input type="number" id="braidness" name="braidness" value="0.5" min="0" max="1" step="0.1">
         </div>
         <!-- Sparse loop options -->
         <div class="option-group" data-algorithm="sparse-loop">
-          <label for="loop-fraction">Loop Fraction (0-1):</label>
+          <label for="loop-fraction" title="Podíl všech možných smyček, které budou přidány (0 = žádné, 1 = všechny možné)">Podíl smyček (0-1):</label>
           <input type="number" id="loop-fraction" name="loopFraction" value="0.12" min="0" max="1" step="0.01">
         </div>
         <!-- Multi-layer options -->
         <div class="option-group" data-algorithm="multi-layer">
-          <label for="layers">Layers:</label>
+          <label for="layers" title="Počet vrstev bludiště umístěných vedle sebe (2-5)">Počet vrstev:</label>
           <input type="number" id="layers" name="layers" value="2" min="2" max="5">
-          <label for="portals">Portals:</label>
+          <label for="portals" title="Počet náhodných portálů/spojení mezi vrstvami (1-10)">Počet portálů:</label>
           <input type="number" id="portals" name="portals" value="4" min="1" max="10">
         </div>
       </div>
+
+      <!-- Distribution Balancer Options -->
+      <div id="balance-options" class="algorithm-options">
+        <label title="Podíl buněk s pouze jedním východem (mrtvé konce)">
+          Mrtvé konce %:
+          <input type="number" id="dead-end-ratio" name="deadEndRatio"
+                 value="0.4" min="0" max="1" step="0.05">
+        </label>
+        <label title="Podíl buněk se třemi východy (křižovatky)">
+          Trojcestné křižovatky %:
+          <input type="number" id="three-way-ratio" name="threeWayRatio"
+                 value="0.4" min="0" max="1" step="0.05">
+        </label>
+        <label title="Podíl buněk se dvěma protilehlými východy (rovné chodby)">
+          Rovné chodby %:
+          <input type="number" id="straight-ratio" name="straightRatio"
+                 value="0.2" min="0" max="1" step="0.05">
+        </label>
+      </div>
+
     </form>
 
     <div class="controls">
-      <button id="generate-btn" type="button">Generate</button>
-      <button id="clear-btn" type="button">Clear</button>
-      <button id="save-btn" type="button">Save as JSON</button>
-      <button id="save-svg-btn" type="button">Save as SVG</button>
+      <button id="generate-btn" type="button" title="Vygeneruje nové bludiště podle zvolených nastavení">Generovat</button>
+      <button id="clear-btn" type="button" title="Vymaže aktuální bludiště z plátna">Vymazat</button>
+      <button id="save-btn" type="button" title="Uloží bludiště jako JSON soubor pro pozdější načtení">Uložit jako JSON</button>
+      <button id="save-svg-btn" type="button" title="Exportuje bludiště jako vektorový SVG soubor pro tisk nebo úpravy">Uložit jako SVG</button>
+      <button id="print-worksheet-btn" type="button" title="Vygeneruje 3 bludiště (snadné, střední, těžké) a stáhne je jako PDF na A4. TIP: V dialogu tisku vypněte 'Hlavičky a patičky' pro nejčistší výsledek." style="background: #d63031; margin-top: 1rem; width: 100%;">📄 Stáhnout tiskový arch PDF</button>
     </div>
 
-    <canvas id="maze-canvas"></canvas>
-    
+    <canvas id="maze-canvas" title="Vygenerované bludiště - zelený čtverec je vstup, červený čtverec je výstup"></canvas>
     <div id="error-message" class="error-message" role="alert"></div>
   </div>
 
-  <!-- Your JS modules -->
   <script type="module" src="src/app.js"></script>
 </body>
 </html>
