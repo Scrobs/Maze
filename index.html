@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Maze Generator & Visualizer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Advanced, printable, and exportable 2D maze generator and visualizer with algorithm selection.">
+  <link rel="stylesheet" href="style/main.css">
+  <!-- Monospaced font for optimal clarity -->
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <!-- Optionally, favicon -->
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+</head>
+<body>
+  <div class="container">
+    <form id="maze-config" autocomplete="off">
+      <label for="maze-width">Width:</label>
+      <input type="number" id="maze-width" name="width" value="20" min="2" max="100" required>
+
+      <label for="maze-height">Height:</label>
+      <input type="number" id="maze-height" name="height" value="20" min="2" max="100" required>
+
+      <label for="algorithm">Algorithm:</label>
+      <select id="algorithm" name="algorithm">
+        <option value="binary-tree">Binary Tree (Very Easy)</option>
+        <option value="sidewinder">Sidewinder (Easy)</option>
+        <option value="recursive-backtracker">Recursive Backtracker (Easy–Medium)</option>
+        <option value="hunt-and-kill">Hunt-and-Kill (Medium)</option>
+        <option value="aldous-broder">Aldous-Broder (Medium)</option>
+        <option value="ellers">Eller's (Medium–Hard)</option>
+        <option value="prims">Randomized Prim's (Medium–Hard)</option>
+        <option value="kruskals">Randomized Kruskal's (Hard)</option>
+        <option value="wilsons">Wilson's Algorithm (Hard–Very Hard)</option>
+        <option value="braided">Braided / Post-Processed (Very Hard)</option>
+        <option value="sparse-loop">Sparse Loop-Added (Extremely Hard)</option>
+        <option value="multi-layer">3D / Multi-layer / Non-Euclidean (Nightmare/Expert)</option>
+      </select>
+
+      <div id="algorithm-options" class="algorithm-options">
+        <!-- Braided options -->
+        <div class="option-group" data-algorithm="braided">
+          <label for="braidness">Braidness (0-1):</label>
+          <input type="number" id="braidness" name="braidness" value="0.5" min="0" max="1" step="0.1">
+        </div>
+        <!-- Sparse loop options -->
+        <div class="option-group" data-algorithm="sparse-loop">
+          <label for="loop-fraction">Loop Fraction (0-1):</label>
+          <input type="number" id="loop-fraction" name="loopFraction" value="0.12" min="0" max="1" step="0.01">
+        </div>
+        <!-- Multi-layer options -->
+        <div class="option-group" data-algorithm="multi-layer">
+          <label for="layers">Layers:</label>
+          <input type="number" id="layers" name="layers" value="2" min="2" max="5">
+          <label for="portals">Portals:</label>
+          <input type="number" id="portals" name="portals" value="4" min="1" max="10">
+        </div>
+      </div>
+    </form>
+
+    <div class="controls">
+      <button id="generate-btn" type="button">Generate</button>
+      <button id="clear-btn" type="button">Clear</button>
+      <button id="save-btn" type="button">Save as JSON</button>
+      <button id="save-svg-btn" type="button">Save as SVG</button>
+    </div>
+
+    <canvas id="maze-canvas"></canvas>
+    
+    <div id="error-message" class="error-message" role="alert"></div>
+  </div>
+
+  <!-- Your JS modules -->
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>
